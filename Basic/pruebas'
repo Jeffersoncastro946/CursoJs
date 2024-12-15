@@ -1,0 +1,507 @@
+<div class="jarviswidget jarviswidget-color-darken">
+    <header role="heading">
+        <h2>
+            <span class="fa fa-list-alt fa-fw"></span>  Control Cobranzas
+        </h2>
+        <div class="widget-toolbar" role="menu">
+            <a class="btn btn-primary btn-lg" href="@Url.Action("resumenControlCobranzas","Cobranza")">Resumen</a>
+        </div>
+    </header>
+    <div>
+        <div class="widget-body no-padding">
+            <table class="table table-bordered table-hover" id="tablaControlCobranza" width="100%" style="width:100%;">
+                <thead>
+                    <tr>
+                        <th>Acciones</th>
+                        <th></th>
+                        <th style="min-width: 140px !important">Factura SAR </th>
+                        <th width="15%">Factura Interna </th>
+                        <th>Fec. Zarpe </th>
+                        <th>Nombre Cliente</th>
+                        <th>Contratos</th>
+                        <th>Sacos</th>
+                        <th>QQ</th>
+                        <th>Precio Fijación</th>
+                        <th>Diferencial</th>
+                        <th>Precio Total</th>
+                        <th>Monto Cobranza</th>
+                        <th>Document For Collect</th>
+                        <th>Tipo Documentacion</th>
+                        <th>Banco</th>
+                        <th>Forma Pago</th>
+                        <th>Fec. De Envió de Honf.</th>
+                        <th>Env. al Ban.</th>
+                        <th>Ref. Ban.</th>
+                        <th>Guia De Honf.</th>
+                        <th>Fec. Recibida Bnc de Honf.</th>
+                        <th>Fec. enviada Bnc de Honf.</th>
+                        <th>Guia del Bnc. Import.</th>
+                        <th>Fec. llegada Bnc. Import.</th>
+                        <th>Fec. de Pago</th>
+                        <th>Cantidad Ingresada</th>
+                        <th>Diferencia</th>
+                        <th>Comprobante de pago</th>
+                        <th>Dias de Pago</th>
+                        <th>Antigüedad</th>
+                        <th>Confirmado</th>
+                        <th>Observaciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+  var tablaCobranza = $("#tablaControlCobranza").DataTable({
+      "sDom": "<'dt-toolbar'<'col-xs-12 col-sm-6 hidden-xs'f><'col-sm-6 col-xs-12 hidden-xs'<'toolbar col-lg-6'>lB>r>" +
+          "t" +
+          "<'dt-toolbar-footer'<'col-sm-6 col-xs-12 hidden-xs'i><'col-xs-12 col-sm-6'p>>",
+      "autoWidth": true,
+      "scrollX": true,
+      buttons: [
+          'excel', 'print'
+      ],
+      "language": {
+          "emptyTable": "No se encontraron resultados.",
+          "search":
+              '<div class="icon-addon addon-md"><label for="search" class="glyphicon glyphicon-search"></label>',
+          "paginate": {
+              first: "Primero",
+              previous: "Anterior",
+              next: "Siguiente",
+              last: "Ultimo"
+          },
+          "info": "Mostrando registros del _START_ al _END_ de _TOTAL_ registros totales.",
+          "infoEmpty": "No hay registros para mostrar.",
+      },
+
+      order: [[2, 'desc']],
+      @*ajax: {
+          url: "@Url.Action("GetListFacturaCobrazaIndex", "Cobranza")",
+          /*data: { idCosecha: $("#Cosecha").val() },*/
+          type: 'GET',
+          dataSrc: function (data) {
+              return data;
+          },
+      },*@
+      columns: [
+          {
+              data: null,
+              render: function (data) {
+                  var opciones = '<div class="btn-group display-inline pull-left text-align-left">' +
+                      '<button class="btn btn-xs btn-link dropdown-toggle ';
+
+                  //opciones += !data.Estado ? "disabled" : "";
+                  opciones +=
+                      '" data-toggle="dropdown" aria-expanded="false"> Acciones <i class="fa fa-caret-down fa-lg"></i> </button><ul class="dropdown-menu dropdown-menu-xs pull-left">';
+
+
+                  ////opciones += data.Estado && @Json.Encode(User.IsInRole("Editar_ControlCobranza"))
+                  opciones += (data.Autorizado && !data.Confirmado && @Json.Encode(User.IsInRole("Editar_ControlCobranza")))
+                      ? '<li><a href="javascript:void(0);" name="crearCobranza"> Cobranza </a></li>'
+                      : '<li><span class="center-block padding-5 label label-danger">Pedir Autorizacion para modificar</i></span></li>';
+
+                  opciones += (!data.Autorizado && @Json.Encode(User.IsInRole("Autorizar_Editado_ControlCobranza")))
+                      ? '<li><a href="javascript:void(0);" name="autorizar"> Autorizar </a></li>'
+                      : '';
+                  opciones += ((!data.Confirmado && data.Autorizado) && @Json.Encode(User.IsInRole("Confirmar_ControlCobranza")))
+                      ? '<li><a href="javascript:void(0);" name="confirmar"> Confirmar </a></li>'
+                      : '';
+
+                  opciones += (data.Confirmado)
+                      ? '<li><a href="javascript:void(0);" name="reporteCoverLetter"> Reporte Cover Letter </a></li>'
+                      : '';
+
+
+
+                  opciones += '</ul></div>';
+                  return opciones;
+              }
+          },
+          {
+              data: null,
+              render: function (data) {
+                  return '<div class="btn-group" role="group"><button class="btn btn-link btn-xs" data-class="collapsableRow"> <i class="fa fa-plus-circle" aria-hidden="true" name="icon-expand"></i></button></div>';
+              },
+              orderable: false
+          },
+          { data: "FacturaSAR" },
+          { data: "CodigoHcf" },
+          { data: "FechaEmbarque" },
+          { data: "NombreCliente" },
+          { data: "CodContrato" },
+          {
+              data: null,
+              className: "Sacos",
+              render : function (data) {
+                  return formatDecimal(data.Sacos, 0);
+              }
+          },
+          {
+              data: null,
+              className: "QQ",
+              render : function (data) {
+                  return formatDecimal(data.QQ, 2);
+              }
+          },
+          {
+              data: null,
+              className: "PrecioFijacion",
+              render: function (data) {
+                  return formatDecimal(data.PrecioFijacion, 2);
+              }
+          },
+          {
+              data: null,
+              className: "Diferencial",
+              render: function (data) {
+                  return formatDecimal(data.Diferencial, 0);
+              }
+          },
+          {
+              data: null,
+              className: "PrecioImportador",
+              render: function (data) {
+                  return formatDecimal(data.PrecioImportador, 4);
+              }
+          },
+
+          {
+              data: null,
+              className: "MontoOriginal",
+              render: function (data) {
+                  return formatDecimal(data.MontoOriginal, 2);
+              }
+          },
+          {
+              data: null,
+              render: function (data) {
+                  return !data.DocumentForCollect ?
+                      '<span class="center-block padding-5 label label-danger">PENDIENTE DOCUMENTACION</i></span>'
+                      : '<span class="center-block padding-5 label label-success">DOCUMENTACION COMPLETA</i></span>';
+              }
+          },
+          {
+              data: "TipoDocumento",
+          },
+          {
+              data: "Banco",
+          },
+          {
+              data: "TipoFormaPago",
+          },
+
+          {
+              data: null,
+              className: "FechaDeEnvio",
+              render: function (data) {
+                  return data.FechaDeEnvio ? moment(data.FechaDeEnvio).format("DD/MM/YYYY hh") : "";
+              },
+              visible: false,
+          },
+
+          {
+              data: null,
+              className: "EnviadoAlBanco",
+              render: function (data) {
+                  const id = data.IdEnviadoAlBanco;
+                  if (!id) return "";
+
+                  if (!listBancos || listBancos.length == 0) return "";
+
+                  const banco = listBancos.find(x => x.id == id)
+
+                  return banco.text.toUpperCase();
+
+              },
+              visible: false,
+          },
+
+          {
+              data: null,
+              className: "RefBanco",
+              render: function (data) {
+                  return data.RefBanco;
+              },
+              visible: false,
+          },
+
+          {
+              data: null,
+              className: "GuiaDeHonducafe",
+              render: function (data) {
+                  const { IdEmpresaGuiaDeHonducafe = 0, GuiaDeHonducafe } = data
+
+                  let html = "";
+                  let color = ["", "#4d2e00", "#000066", "#e6e600"]
+
+                  if (GuiaDeHonducafe) {
+                      html += 
+                          <label style="background-color: ${color[IdEmpresaGuiaDeHonducafe]}; color: #fff;">${GuiaDeHonducafe.toUpperCase()}</label>
+                      ;
+                  }
+
+                  const empGuia = empresaGuia.find(x => x.id = IdEmpresaGuiaDeHonducafe);
+                  if (empGuia) {
+                      html +=  - ${empGuia.text};
+                  }
+
+
+                  return html;
+              },
+              visible: false
+          },
+
+          {
+              data: null,
+              className: "FechaRecibidaBancoHonducafe",
+              render: function (data) {
+                  const color = ["#8B0000", "#FFF"]
+
+                  const FechaDeEnvio = new Date(moment(data.FechaDeEnvio).format("YYYY/MM/DD H: MM"));
+                  const formatoActual = moment().format("YYYY/MM/DD H: MM");
+
+                  const FeDeEnvioConv = new Date(FechaDeEnvio);
+                  const formActuConv = new Date(formatoActual);
+
+                  const tiempo1 = FeDeEnvioConv.getTime();
+                  const tiempo2 = formActuConv.getTime();
+
+                  const horas = Math.abs(tiempo1 - tiempo2);
+
+                  const days = Math.floor(horas / 86400000);
+                  const hours = Math.floor((horas % 86400000) / 3600000);
+
+                  const todasLasHoras = (days * 24) + hours;
+
+                  var fecha = moment(data.CuandoLlego).format("DD/MM/YYYY H");
+
+                  if (todasLasHoras >= 24 && data.GuiaDelBanco == null && data.CuandoLlego != null) {
+                      return 
+
+                          <label style="background-color: ${color[0]}; color: ${color[1]};">${fecha}</label>
+
+                      ;
+                  }
+
+                  return data.CuandoLlego ? moment(data.CuandoLlego).format("DD/MM/YYYY hh") : "";
+              },
+              visible: false
+          },
+
+          {
+              data: null,
+              className: "FechaEnviadaBancoHonducafe",
+              render: function (data) {
+                  return data.FechaRecibidaBancoExtanjero ? moment(data.FechaRecibidaBancoExtanjero).format("DD/MM/YYYY hh") : "";
+              },
+              visible: false
+          },
+
+          {
+              data: null,
+              className: "GuiaDelBanco",
+              render: function (data) {
+                  const { IdEmpresaGuiaDelBanco = 0, GuiaDelBanco } = data
+
+                  let html = "";
+                  let color = ["", "#4d2e00", "#000066", "#e6e600"]
+
+                  if (GuiaDelBanco) {
+                      html += 
+                          <label style="background-color: ${color[IdEmpresaGuiaDelBanco]}; color: #fff;">${GuiaDelBanco.toUpperCase()}</label>
+                      ;
+                  }
+
+                  const empGuia = empresaGuia.find(x => x.id = IdEmpresaGuiaDelBanco);
+                  if (empGuia) {
+                      html +=  - ${empGuia.text};
+                  }
+
+
+                  return html;
+              },
+              visible: false,
+          },
+
+          {
+              data: null,
+              className: "CuandoLlegoAlBanco",
+              render: function (data) {
+                  return data.CuandoLlegoAlBanco ? moment(data.CuandoLlegoAlBanco).format("DD/MM/YYYY hh") : "";
+              },
+              visible: false,
+          },
+
+          {
+              data: null,
+              className: "FechaDePago",
+              render: function (data) {
+                  return data.FechaDePago ? moment(data.FechaDePago).format("DD/MM/YYYY hh") : "";
+              },
+              visible: false,
+          },
+
+          {
+              data: null,
+              className: "Pago",
+              render: function (data) {
+                  return formatDecimal(data.IngresoAlBanco, 2);
+              }
+          },
+
+          {
+              data: null,
+              className: "Cobranza",
+              render: function (data) {
+                  var tot = parseFloat(data.IngresoAlBanco ?? 0, 2) - parseFloat(data.MontoOriginal ?? 0, 2);
+                  var color = tot < 0 ? "red" : "green";
+                  return '<span style="color: ' + color + ';">' + tot.toLocaleString(es-US, { currency: HNL }) + '</span>';
+              }
+          },
+
+
+          {
+              data: null,
+              className: null,
+              render: function (data) {
+
+                  var ruta = data.RutaDeComprobante;
+                  var nombreArchivo = "";
+                  if (ruta !== null && ruta !== "" && ruta !== "../") {
+                      nombreArchivo = ruta.split("-RCR-")[1];
+                  }
+
+                  return (data.RutaDeComprobante !== null && data.RutaDeComprobante !== "") ?
+                      <a href="javascript:void(0);" name="botonComprobante" class="btn btn-primary" style="margin: 1px;" >Visualizar</a> +
+                      <a name="botonDescargar" class="btn btn-secondary" href="${ruta}" style="margin: 1px;" download="${nombreArchivo}" >Descargar</a>
+                      :
+                      `;
+
+              }
+          },
+
+          {
+              data: null,
+              className: "DiasPago",
+              render: function (datas) {
+
+                  var opt = "";
+                  if (datas.FechaDeEnvio == null || datas.FechaDeEnvio == "" || datas.FechaDePago == null || datas.FechaDePago == "") {
+                      opt = <label id="" class="" id="${datas.IdFactura}"></label>;
+                  } else {
+
+                      var day1 = new Date(moment(datas.FechaDeEnvio).format("MM/DD/YYYY"));
+                      var day2 = new Date(moment(datas.FechaDePago).format("MM/DD/YYYY"));
+                      var difference = Math.abs(day2 - day1);
+                      days = difference / (1000 * 3600 * 24)
+                      opt = <label id="${datas.IdFactura}" class="">${days}</label>;
+                  }
+                  return opt
+              }
+          },
+
+
+          {
+              data: null,
+              className: "Antiguedad",
+              render: function (datas) {
+                  var opt = "";
+                  //if (datas.CuandoLlegoAlBanco == null || datas.CuandoLlegoAlBanco == "" || !(datas.CuandoLlegoAlBanco == null || datas.CuandoLlegoAlBanco == "" || datas.FechaDePago == null || datas.FechaDePago == "")) {
+                  if (datas.CuandoLlegoAlBanco == null || datas.CuandoLlegoAlBanco == "") {
+                      opt = <label id="Antiguedad-${datas.IdFactura}" class=""></label>
+                  } else {
+
+                      const cuandoLlegoAlBanco = datas.CuandoLlegoAlBanco;
+                      var day1 = new Date(moment(datas.CuandoLlegoAlBanco).format("MM/DD/YYYY hh:mm"));
+
+
+                      const fechaDeEnvio = moment(day1);
+                      const fechaActual = moment();
+
+                      if (!fechaDeEnvio.isValid()) {
+                          return;
+                      }
+
+                      const diff = fechaActual.diff(fechaDeEnvio);
+                      const duration = moment.duration(diff);
+
+                      const days = Math.floor(duration.asDays());
+
+                      const hours = duration.subtract(days, 'days').hours();
+
+                      var repuesta =  ${days} D : ${hours}H;
+                      opt = <label id="Antiguedad-${datas.IdFactura}" class="">${repuesta}</label>;
+                  }
+                  return opt;
+              }
+          },
+          {
+              data: null,
+              render: function (data) {
+                  if (data.IdSeguimientoCobranza == 0) return "";
+                  return !data.Confirmado ?
+                      '<span class="center-block padding-5 label label-danger">NO CONFIRMADO</i></span>'
+                      : '<span class="center-block padding-5 label label-success">CONFIRMADO</i></span>';
+              }
+          },
+          {
+              data: null,
+              render: function (data) {
+
+                  return data.Observacion;
+              }
+          },
+
+
+
+      ],
+      initComplete: function () {
+          $("#selecliente").change(function () {
+              var table = tablaCobranza;
+              var Cliente = $("#selecliente").val();
+              if (Cliente === "-1" || Cliente === null) {
+                  table.column(4).search("").draw();
+              } else {
+                  table.column(4).search(Cliente).draw();
+              }
+          });
+      },
+      drawCallback: function () {
+          var tabla = $.fn.dataTable.Api(this);
+          tabla.rows().every(function () {
+              var data = this.data();
+              var antiguedad;
+              var Pago = data.IngresoAlBanco;
+              if (data.CuandoLlegoAlBanco == null || data.CuandoLlegoAlBanco == "") {
+                  antiguedad = 0;
+              } else {
+                  var FechaDeEnvio = new Date(moment(data.CuandoLlegoAlBanco).format("YYYY/MM/DD H: MM"));
+                  let formFechaDeEnvio = moment(FechaDeEnvio).format("YYYY/MM/DD H: MM");
+                  var date = new Date();
+                  var formatoActual = moment(date).format("YYYY/MM/DD H: MM");
+
+                  var FeDeEnvioConv = new Date(formFechaDeEnvio);
+                  var formActuConv = new Date(formatoActual);
+
+                  var tiempo1 = FeDeEnvioConv.getTime();
+                  var tiempo2 = formActuConv.getTime();
+
+                  var horas = Math.abs(tiempo1 - tiempo2);
+
+                  var days = Math.floor(horas / 86400000);
+
+                  antiguedad = days;
+              }
+              //fin de calcular la fecha
+
+              if (antiguedad >= 10 && (Pago == null || Pago == "")) {
+                  $(this.node()).addClass('bg-deep-orange blink').addClass('blink');
+              }
+
+          });
+      }
+
+});
